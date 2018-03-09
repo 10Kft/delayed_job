@@ -109,9 +109,10 @@ module Delayed
     def setup_pools
       worker_index = 0
       @worker_pools.each do |queues, worker_count|
+        worker_index = 1
         options = @options.merge(:queues => queues)
         worker_count.times do
-          process_name = "delayed_job.#{queues.join('_')}(#{worker_index}:#{worker_count})"
+          process_name = "#{queues.join('_')}.delayed_job.#{worker_index}-#{worker_count})"
           run_process(process_name, options)
           worker_index += 1
         end
@@ -126,11 +127,19 @@ module Delayed
       end
     end
 
+
+
     def run(worker_name = nil, options = {})
       Dir.chdir(root)
+      parts = worker_name.split('.')[0] if worker_name.present?
+      log_file_name = "delayed_job"
+      log_file_name += ".#{parts[0]}" if parts.present? && parts.length > 1
+      log_file_name += ".#{Rails.env}.log"
 
       Delayed::Worker.after_fork
-      Delayed::Worker.logger ||= Logger.new(File.join(@options[:log_dir], 'delayed_job.log'))
+      Delayed::Worker.logger = Logger.new(File.join(@options[:log_dir], log_file_name))
+      ActiveRecord::Base.logger = Delayed::Worker.logger
+      Rails.logger = Delayed::Worker.logger
 
       worker = Delayed::Worker.new(options)
       worker.name_prefix = "#{worker_name} "
