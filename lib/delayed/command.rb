@@ -112,7 +112,7 @@ module Delayed
         worker_index = 1
         options = @options.merge(:queues => queues)
         worker_count.times do
-          process_name = "#{queues.join('_')}.delayed_job.#{worker_index}-#{worker_count})"
+          process_name = "#{queues.join('_')}.delayed_job.#{worker_index}-#{worker_count}"
           run_process(process_name, options)
           worker_index += 1
         end
