@@ -131,7 +131,7 @@ module Delayed
 
     def run(worker_name = nil, options = {})
       Dir.chdir(root)
-      parts = worker_name.split('.')[0] if worker_name.present?
+      parts = worker_name.split('.') if worker_name.present?
       log_file_name = "delayed_job"
       log_file_name += ".#{parts[0]}" if parts.present? && parts.length > 1
       log_file_name += ".#{Rails.env}.log"
