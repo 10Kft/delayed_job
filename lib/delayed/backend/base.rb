@@ -1,3 +1,20 @@
+# Strip inactive character as a failover strategy.
+# Added by: Skylar @ 03-12-2018
+# reference to script: https://rosettacode.org/wiki/Strip_control_codes_and_extended_characters_from_a_string#Ruby
+class String
+  def strip_control_characters()
+    chars.each_with_object("") do |char, str|
+      str << char unless char.ascii_only? and (char.ord < 32 or char.ord == 127)
+    end
+  end
+
+  def strip_control_and_extended_characters()
+    chars.each_with_object("") do |char, str|
+      str << char if char.ascii_only? and char.ord.between?(32,126)
+    end
+  end
+end
+
 module Delayed
   module Backend
     module Base
@@ -71,7 +88,11 @@ module Delayed
       def payload_object
         @payload_object ||= YAML.load_dj(handler)
       rescue TypeError, LoadError, NameError, ArgumentError, SyntaxError, Psych::SyntaxError => e
-        raise DeserializationError, "Job failed to load: #{e.message}. Handler: #{handler.inspect}"
+        begin
+          @payload_object ||= YAML.load_dj(handler.strip_control_characters)
+        rescue TypeError, LoadError, NameError, ArgumentError, SyntaxError, Psych::SyntaxError => e
+          raise DeserializationError, "Job failed to load: #{e.message}. Handler: #{handler.inspect}"
+        end
       end
 
       def invoke_job
